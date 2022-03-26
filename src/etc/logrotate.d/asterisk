@@ -1,0 +1,33 @@
+/var/log/asterisk/error /var/log/asterisk/messages /var/log/asterisk/notice /var/log/asterisk/security /var/log/asterisk/verbose /var/log/asterisk/warning /var/log/asterisk/*log {
+        su root root
+        daily
+        missingok
+        rotate 15
+        delaycompress
+        notifempty
+        dateext
+        dateformat -%Y-%m-%d
+        create 640 asterisk asterisk
+        compress
+        sharedscripts
+        postrotate
+                /usr/sbin/asterisk -rx 'logger reload' > /dev/null 2> /dev/null
+        endscript
+}
+
+/var/log/asterisk/cdr-c*/*csv {
+        su root root
+        missingok
+        rotate 13
+        monthly
+        dateext
+        dateformat -%Y-%m-%d
+        delaycompress
+        notifempty
+        create 640 asterisk asterisk
+        compress
+        sharedscripts
+        postrotate
+                /usr/sbin/asterisk -rx 'logger reload' > /dev/null 2> /dev/null                                       || true
+        endscript
+}
