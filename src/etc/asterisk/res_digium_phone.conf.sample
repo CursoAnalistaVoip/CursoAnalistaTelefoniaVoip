@@ -1,0 +1,1130 @@
+[general]
+; --- DPMA CONFIGURATION INFORMATION ---
+;
+; A complete guide on configuring the DPMA is available in the Digium Phones
+; section of the Digium's Asterisk Products space of the Asterisk wiki at:
+;
+; https://wiki.asterisk.org/wiki/display/DIGIUM/Digium+Phones
+;
+; ---- DPMA CONFIGURATION FOR chan_pjsip ----
+;
+; In order to use the DPMA with the chan_pjsip module a
+; default_outbound_endpoint needs to be enabled in pjsip.conf.
+; This is accomplised by configuring a basic endpoint to use
+; and then setting that endpoint as the default.
+;
+; Example pjsip.conf settings:
+;
+; [global]
+; type=global
+; default_outbound_endpoint=dpma_endpoint
+;
+; [dpma_endpoint]
+; type=endpoint
+;
+; (see pjsip.conf.sample for more info)
+;
+; ---- DPMA CONFIGURATION OPTIONS ----
+;
+; Config and Userlist Authorization Options.
+;
+; The server_uuid provides a unique identifier for this server.  Notably, this
+; is used when forwarding voicemails to contacts local to this server.
+;
+; server_uuid=abcdefg123
+;
+; The globalpin represents a global admin pin that is used to pull the config
+; of any phone when config_auth is set to globalpin.
+; This pin may also be required before a phone user can pull the user list.
+;
+; globalpin=1234 ; should be something easily entered on a phone keypad
+;
+; The userlist_auth option specifies what kind of authentication is
+; required for a phone to pull the user list. Valid arguments are
+; disabled or globalpin.  Setting this to globalpin requires the
+; phone user to enter the globalpin value before
+; being allowed to get the userlist.
+;
+; userlist_auth=disabled
+;
+; The config_auth option specifies what kind of authentication is required
+; for a phone to pull a valid config from the server for a user.
+; Below are the valid values for this option.
+;
+; VALID OPTIONS:
+; mac - The MAC address alone must match the phone config requested.
+; pin - Only the phone's specific password must be valid to
+;       retrieve the requested config.
+; globalpin - Only the global password (or group_pin, if set on a phone) must
+;             be valid to retrieve the config.
+; disabled - Configs are served up with no authentication. Any
+;            phone can pull any phone configuration defined in this file
+;            with no authentication challenges.
+;
+; config_auth=disabled
+;
+
+; mDNS Service Discovery Options
+;
+; The registration address provided by the DPMA to Avahi. This is the address
+; to which phones discovering the DPMA using mDNS will contact.
+;
+; mdns_address=10.10.10.10
+;
+; The registration port provided by the DPMA to Avahi. This is the port to
+; which phones discovering the DPMA using mDNS will connect.
+;
+; mdns_port=5060
+;
+; The transport (udp, tcp, or tls) provided by the DPMA to Avahi.  This is
+; the transport which phones dicsovering the DPMA using mDNS will use
+; to connect. Defaults to udp.
+;
+; mdns_transport=udp
+;
+; The name of the service to be used in mDNS service discovery.
+; This will default to "Digium Phones Config Server" when
+; service_discovery_enabled is set and the registration address
+; and port are present.
+;
+; service_name=Digium Phones Config Server
+;
+; Whether or not to advertise the config server using Avahi or not.
+; By default this option is set to yes.  The discovery service will only
+; be enabled when the registration server and port are explicitly configured.
+;
+; service_discovery_enabled=yes
+;
+; Transaction threadpool settings
+;
+; transaction_initial_threads - Initial number of threads to handle transaction with.
+;                               Defaults to 1.
+; transaction_max_threads - Maximum number of threads to handle transactions with.
+;                           Threads are created as needed by a threadpool. Defaults to
+;                           4.
+
+; Files Options
+;
+; The files directory points to the folder phones are allowed to look in
+; to retrieve txt and binary files.  This directory is used for storing
+; contacts_display_rules xml files and user provided config files, but may
+; be used to serve up binary data as well in the future. By default, this
+; directory is located in /var/lib/asterisk/digium_phones.
+;
+; file_directory=/path/to/files/dir
+;
+
+; Other Options
+;
+; The context used for routing messages in pjsip so that conflicts found in
+; in pjsip.conf can be avoided.  Defaults to dpma_pjsip_message_context.
+;
+; pjsip_message_context=dpma_pjsip_message_context
+;
+; message_delay - The wait delay, in milliseconds, between multiple messages
+;                 that are being transmitted in response to a single request.
+;                 Defaults to 5 ms.
+;
+
+; ---- GENERAL SECTION EXAMPLE ----
+; [general] ; This is already declared above, in this file, and is listed here
+            ; for the sake of completion, but do not declare it twice
+; server_uuid=abcdefg123
+; globalpin=344486
+; userlist_auth=disabled
+; config_auth=mac_globalpin
+; mdns_address=10.1.2.3
+; mdns_port=5060
+; mdns_transport=udp
+; service_name=Asterisk
+; service_discovery_enabled=yes
+; file_directory=/var/lib/asterisk/digium_phones
+
+; ---- CONFIGURING NETWORKS ----
+; Network profiles are configured by defining a context with type option equal
+; to "network." A Network profile contains provisioning information specific to
+; a CIDR-numbered network. When the Digium phone boots, it compares its network
+; address to the CIDR addresses defined for each of its network profiles, and
+; the phone choses to use the provisioning information specific to the network
+; on which it is located. Network profiles allow administrators to gracefully
+; handle situations where the movement of a Digium phone causes the
+; registration address (and other information) of the Asterisk server to change.
+;
+; More than one Network profile may be assigned to a Digium phone.
+;
+; NETWORK OPTIONS
+; alias - The name for the network, viewable in the phone's preferences menu
+;
+; cidr - A CIDR-formatted network address
+;
+; registration_address - Allows for explicit definition of the address to which
+;                        phones should register.
+;
+; registration_port - The port on which the registration server is running – the
+;                     same port on which SIP is running on the Asterisk instance.
+;
+; transport - The transport (udp, tcp, or tls) this registration should use.  Can
+;             be overridden by line configuration.  Defaults to udp.
+;
+; alternate_registration_address - The address to which phones will maintain a
+;                                  backup registration, in case the primary server
+;                                  becomes unavailable.
+;
+; alternate_registration_port - The port to use for backup registration.
+;
+; alternate_transport - The transport (udp, tcp, or tls) this registration should
+;                       use.  Can be overridden by line configuration.  Defaults to udp.
+;
+; file_url_prefix - Specifies the URL prefix the phone module should use to
+;                   tell the phones where to retrieve files (only firmware,
+;                   currently).
+;
+; public_firmware_url_prefix - Specifies the URL prefix the phone should use
+;                              to download firmware if the phone fails to retrieve
+;                              a given firmware from the location specified in its
+;                              firmware profile. This will default to a publicly
+;                              accessible site hosted by Digium (address:
+;                              http://dphone.dl.digium.com/firmware/asterisk/)
+;                              if it isn't specified manually. When using firmwares
+;                              from a public firmware repository, the path will always
+;                              use the following pattern:
+;                              public_firmware_url_prefix/VERSION/VERSION_MODEL_firmware.eff
+;
+; ntp_server - Defines the NTP server to which phones will synchronize themselves
+;
+; syslog_server - Defines a remote server to which syslog message are sent.
+;                 Defaults to none.  Note that syslog must be started with the
+;                 '-r' option on the remote host to receive these messages.
+;
+; syslog_port - Port to which syslog messages are sent. Defaults to 514.
+;
+; syslog_level - Logging level for syslog messages
+;
+; network_vlan_discovery_mode - Sets use of NONE, MANUAL, or LLDP discovered
+;                               VLAN and, if MANUAL, defines the network.
+;                               Defaults to LLDP. These values are case sensitive.
+;
+; sip_qos - Sets the SIP VLAN QOS level (0-7)
+;
+; rtp_qos - Sets the RTP VLAN QOS level (0-7)
+;
+; pc_qos - Sets the PC Port VLAN QOS level (0-7)
+;
+; network_vlan_id - Sets the VLAN identifier for the Network port
+;
+; pc_vlan_id - Sets the VLAN identifier for the PC port
+;
+; sip_dscp - Specifies the DSCP field of the DiffServ byte for SIP Signaling QoS, defaults to 24
+;
+; rtp_dscp - Specifies the DSCP field of the DiffServ byte for RTP Media QoS, defaults to 46
+;
+; udp_ka_interval - Specifies the interval in seconds at which keep-alive
+;                   packets will be sent if the phone is configured for UDP
+;                   transport. Defaults to 0, never.
+
+; ---- NETWORK EXAMPLE ----
+;[network1]
+;type=network
+;alias=My Default Network
+;cidr=10.10.10.0/24
+;registration_address=10.10.10.10
+;registration_port=5060
+;transport=udp
+;alternate_registration_address=10.10.10.12
+;alternate_registration_port=5060
+;alternate_transport=udp
+;file_url_prefix=http://10.10.10.10/digium_phones_files
+;public_firmware_url_prefix=http://dphone.dl.digium.com/firmware/asterisk/
+;ntp_server=0.digium.pool.ntp.org
+;syslog_server=10.1.2.3
+;syslog_port=514
+;syslog_level=error
+;network_vlan_discovery_mode=MANUAL
+;sip_qos=3
+;rtp_qos=5
+;pc_qos=2
+;network_vlan_id=4
+;pc_vlan_id=6
+;sip_dscp=24
+;rtp_dscp=46
+;udp_ka_interval=60
+
+; ---- CONFIGURING RINGTONES ----
+; A Ringtone defines an actual ringing tone to be used by a phone.  When the
+; phone is called, a ringtone plays over the phone's speaker.
+;
+; More than one Ringtone profile may be assigned to a phone
+;
+; RINGTONE OPTIONS
+;
+; alias - An identifier for the ringtone, e.g. FancyRinger.  This identifier
+;         will be present in the phone's preferences menu and its web menu
+;
+; filename - A named, 16-bit, 16kHz mono .wav file reachable from the
+;            file_url_prefix
+;
+
+; ---- RINGTONE EXAMPLE ----
+;[fancytone]
+;type=ringtone
+;alias=FancyTone
+;filename=FancyTone.wav
+
+; ---- CONFIGURING FIRMWARES ----
+; Firmware profiles define firmwares that can be used by phones as an alternative
+; to the firmwares defined in digium_phones_firmware.conf. Firmwares must still
+; reside in a web accessible folder that the phones in question can reach to be
+; used.
+;
+; FIRMWARE OPTIONS
+;
+; model - Model of the phone.  Examples: D40, D50, D70
+;
+; version - Version of the firmware
+;
+; file - filename/path of the firmware relative to file_url_prefix
+;
+; public_firmware - Whether or not we will include a fallback address (based on
+;                   the networks' public_firmware_url_prefix) to retrieve this
+;                   firmware if the phone can not reach the file specified here.
+;                   Default is no.
+;
+; ---- FIRMWARE EXAMPLES ----
+;[firmware-D40_1_1]
+;type=firmware
+;model=D40
+;version=1_1_0_0_48178
+;file=1_1_0_0_48178_D40_firmware.eff
+;public_firmware=yes
+
+;[firmware-D50_1_1]
+;type=firmware
+;model=D50
+;version=1_1_0_0_48178
+;file=1_1_0_0_48178_D50_firmware.eff
+
+;[firmware-D70_1_1]
+;type=firmware
+;model=D70
+;version=1_1_0_0_48178
+;file=1_1_0_0_48178_D70_firmware.eff
+
+; ---- CONFIGURING ALERTS ----
+; Alerts define an Alert-Info header, a ringing type and a ringtone to be used
+; by the phone. Alerts allow complete customization of the phone's ringing
+; behavior
+;
+; ALERT OPTIONS
+;
+; alert_info - The Alert-Info header that the phone should expect when this
+;              Alert is to be used
+;
+; ring_type - The type of ringing behavior that the phone should present when
+;             this Alert is called, from the following:
+;             normal
+;             answer
+;             ring-answer
+;             visual
+;
+; ringtone - Defines the ringtone to be used for this alert.  If blank, then
+;            the phone will not play back a ringing tone, but instead
+;            present silence. Can be one of the default tones loaded onto the
+;            phone or a context name where type=ringtone
+
+; ---- ALERT EXAMPLE ----
+;[alert-fancytone]
+;type=alert
+;alert_info=ai-FancyTone
+;ring_type=ring-answer
+;ringtone=fancytone
+
+; ---- CONFIGURING MULTICAST PAGING LISTENERS ----
+; Multicast paging entries define an IP and PORT that the phone will listen
+; for page announcements on.
+;
+; MULTICAST PAGE OPTIONS
+;
+; alias - the display name to use for the page instead of the [section] name
+;
+; address - the IP address that the page will be sent from
+;
+; port - the port that the page will be sent on
+;
+; priority - a lower number will be played in preference to a higher number
+;
+; interrupt - set to 1 to allow a page to interrupt an active call (default: 0)
+
+; ---- MULTICAST PAGE EXAMPLE ----
+;[everyone]
+;type=multicastpage
+;alias=AllPage
+;address=237.0.0.101
+;port=32000
+;priority=5
+;interrupt=0
+
+; ---- CONFIGURING PHONES ----
+; Phones are configured by defining a context in res_digium_phone.conf
+; with the type option equal to 'phone'. A phone can have any number
+; of lines associated with it. Each line defined in the configuration
+; is reflected as a separate line key on the phone.
+;
+; phone line in res_digium_phone.conf is just a sip peer. That's it. When
+; we specify a line for a phone, such as 'line=1111', 1111 directly relates
+; to a sip peer in sip.conf. We are just telling the phone configuration
+; that it owns that sip peer and should register it as one of it's line
+; keys on bootup.
+;
+; The first line associated with a phone config is set internally as the
+; phone's primary line. A primary line just means that it is the line that
+; will be associated with the phone's configuration when it is chosen from
+; the user list on boot up. The primary line can also be used to automatically
+; match the phone to voicemail boxes and other user centered features when
+; that makes sense. Oftentimes, a user is an extension, so this default matching
+; of a voicemail box to the primary line works.
+;
+; PHONE OPTIONS
+; network - Assigns a network profile to a phone. More than one network can be
+;           assigned to a phone by using multiple network lines.
+;
+; mac - When set, this phone configuration is locked to a device
+;       matching this mac address.
+;
+; pin - The configuration pin associated with this specific config. When
+;       this is set, one must enter this pin on the phone before being able
+;       to pull the phone's configuration.
+;
+; group_pin - Used in the same places as the 'globalpin' [general] option.
+;             This option can be used to provide restricted user lists, or
+;             to restrict which phone(s) a user can claim.
+;
+; line - This option maps directly to a sip.conf peer/user entry. Multiple
+;        line options are possible for a single phone configuration. The first
+;        line entry defined is adopted as the phone's primary line.
+;
+; external_line - This option maps directly to a external_line defined in
+;        this config file.  External lines are lines not defined by sip
+;        peers in sip.conf and may or may not even register to this
+;        instance of Asterisk.  Usage of external lines will disable many
+;        of the advanced phone application features when the line is the
+;        primary extension for a phone.
+;
+; config_file - The phone module automatically generates a config file
+;               for each phone based on the lines assigned to it, but
+;               it is possible to supply a custom config file instead.
+;               This option allows a custom config file located on disk
+;               to be assigned to a specific phone.  By using this option
+;               the module will serve up the custom user generated config
+;               file rather than generating one for the device.  Config
+;               files are assumed to be located in the directory specified
+;               by the file_directory option.  Example usage:
+;               config_file=mycustomconfig.xml
+;
+; firmware - Tells the phone to use firmware specified in the given profile
+;            instead of the one set in digium_phones_firmware.conf
+;            This option may be specified multiple times to cover each model
+;            of phone anticipated used.
+;
+; full_name - The full name of the person who will be using this phone.
+;
+; contact - An xml file in the file_directory containing a list of contacts
+;           to server up to the phone.  Multiple contact options can exist
+;           on a single phone configuration.
+;
+; contacts_display_rules - An xml file in the file_directory containing rules
+;                          that control the display of actions when viewing
+;                          a contact.
+;
+; blf_contact_group - Every contact xml file will have at least one contact
+;                     group defined in it.  This option defines which contact
+;                     group will be subscribed to for user presence and
+;                     device status.  The specified group will also be used
+;                     for the phone's Rapid Dial keys.
+;
+; blf_items - An xml file reachable from the file_url_prefix containing a list
+;             of items to be displayed on the phone's BLF keys. Only one
+;             blf_items option can exist on a single phone configuration.
+;
+; blf_page_return_timeout - an integer value representing the number of
+;                           seconds until BLF page retrieval times out.
+;                           Upon reaching the specified timeout the first
+;                           page of BLF pages is returned. Defaults to 0.
+;
+; contacts_max_subscriptions - Sets the maximum number of contacts
+;                              subscriptions that a phone can make.
+;                              Defaults to 40.
+;
+; timezone - Sets the timezone used for the clock on this phone.
+;            Timezone should be specified as a zone from the IANA Time Zone
+;            Database.  Example values:
+;              Africa/Cairo
+;              America/Los_Angeles
+;              America/Denver
+;              America/Chicago
+;              America/New_York
+;              Antarctica/South_Pole
+;              Asia/Jakarta
+;              Australia/Darwin
+;              Europe/Dublin
+;
+; ntp_resync - Number of seconds until the phone will resync the
+;              internal clock with the NTP server.
+;
+; parking_exten - Sets the extension to park a connected call at. When
+;                 this option is set, the phone will display a softkey
+;                 on the display during a call allowing for one touch
+;                 parking.
+;
+; parking_transfer_type - The type of transfer to perform when parking a call
+;                         using the parking softkey. Valid values are 'blind'
+;                         and 'attended'.
+;
+; show_call_parking - Enables the built-in call parking application.  When
+;                     disabled, the one touch call parking softkey works,
+;                     but the parking slot is not shown and the parking
+;                     lot status cannot be viewed.
+;
+; ringtone - Loads ringtones onto a phone. More than one ringtone may be loaded
+;            onto a phone.
+;
+; active_ringtone - Sets the active ringtone for the phone.  The available
+;                   selections include custom ringtones that have been loaded
+;                   onto the phone using the ringtone= option, as well as (but
+;                   may not be limited to, depending on the phone's firmware
+;                   version) the following:
+;            Alarm
+;            Chimes
+;            Digium
+;            GuitarStrum
+;            Jingle
+;            Office2
+;            Office
+;            RotaryPhone
+;            SteelDrum
+;            Techno
+;            Theme
+;            Tweedle
+;            Twinkle
+;            Vibe
+;
+; alert - Defines Alerts to be applied to this phone profile. More than one
+;         Alert may be applied by specifying additional alert lines.
+;
+; multicastpage - Select a multicast page listener to be applied to this phone
+;                 profile.  More than one can be applied.
+;
+; codecs - Enable and disable codecs on this phone profile.  Multiple codecs
+;                 can be listed separated by commas.  An exclamation point (!)
+;                 prefixing a codec disables it.  The priority of the codecs
+;                 is set in the order they appear in the list.  Valid codecs
+;                 are:
+;
+;                 PCMU,PCMA,G722,G7221,G726-32,opus,G729,iLBC,L16,L16-256
+;
+; web_ui_enabled - By default, when using the Digium Phone Module for Asterisk,
+;                  the phone's built-in Web UI is disabled.  To override this
+;                  and enable the Web UI anyway, which may result in
+;                  unpredictable behavior if the web ui settings conflict with
+;                  the settings provided by the DPMA, enable this option.
+;
+; record_own_calls - Whether a user is able to record their own calls.
+;                    Disabled by default.
+;
+; blf_unused_linekeys - Enabling this option will make unused line keys act as
+;                       BLF keys.  Default is false.
+;
+; send_to_vm - Disabling this option will cause the "Send VM" softkey to
+;              disappear on incoming calls, and the "Transfer VM" softkey to
+;              disappear in the Contacts application.  Default is true.
+;
+; use_local_storage - Enabling this option will cause contacts to be stored
+;                     on the phone.  Default is false.
+;
+; The <model>_logo_file options specify the filename of a user image to send
+; to the phones of model <model>.  The file must be present in the directory
+; specified by the [general] file_directory option.
+;
+; Idle Screen images should be in PNG format, 8-bit depth, a color type without
+; alpha transparency, less than 10k in size, and should fit within the
+; following dimensions:
+;   D40: 150x45 pixels
+;   D45: 150x45 pixels
+;   D50: 150x45 pixels
+;   D60: 296x128 pixels
+;   D62: 296x128 pixels
+;   D65: 296x128 pixels
+;   D70: 205x85 pixels
+;   D80: 800x1280 pixels
+;
+; d40_logo_file
+; d45_logo_file
+; d50_logo_file
+; d60_logo_file
+; d62_logo_file
+; d65_logo_file
+; d70_logo_file
+; d80_logo_file
+;
+; The wallpaper_file option specifies the filename of a user wallpaper image
+; to send to the phone.  The file must be present in the directory specified
+; by the [general] file_diectory option.  The image should be in PNG format,
+; 8-bit depth, color type without alpha transparency, less than 50k in size,
+; and should be 480x272 pixels.  Models that support this option include the
+; D60, D62, and D65.
+;
+; wallpaper_file
+;
+; login_password - Sets the Admin Password for logging into Web UI or Admin
+;                  Settings Section on Phone Menu, defaults to 789.
+;
+; name_format - Formats the display of contact names, first_last or last_first.
+;               Defaults to first_last.
+;
+; accept_local_calls - Sets whether to accept calls from any source or only from
+;                      hosts to which the phone is registered.
+;                      Allowed options: 'any', 'host'
+;
+; ehs - Sets the electronic hookswitch device type. Valid values are auto,
+;       plantronics, jabra_iq. Support for these and other values may vary
+;       depending on firmware.
+;
+; can_forward_calls - Enabling this option allows the phone to use the
+;                     built-in call forwarding application. Enabled by
+;                     default. This option requires phone firmware >= 1.4.1
+;
+; show_call_log - Enabling this option allows the phone to use the built-in
+;                 call log application. Enabled by default. This option requires
+;                 phone firmware >= 1.4.1
+;
+; logout_enabled - Enabling this option enables the LogOut application, which
+;                  allows a phone user to log out of an assigned extension.
+;                  Disabled by default. Requires phone firmware >= 2.6.2. Also,
+;                  only available on D6x series.
+;
+; -- Preferences Menu --
+; lock_preferences - Enabling this option locks phone preference settings to the
+;                    DPMA supplied settings. Enabling this option also hides
+;                    phone preference menus for menu items that are set in the
+;                    Phone profile. Disabled by default.
+;
+; -- Display Settings --
+; brightness - Sets the LCD screen brightness. If not set, uses the firmware default (5)
+;
+; contrast - Sets the LCD screen contrast. If not set, uses the firmware default (5)
+;
+; dim_backlight - Enable backlight dimming. When enabled, dims the screen after
+;                 backlight timeout has been reached and phone is otherwise
+;                 idle.  Enabled by default.
+;
+; backlight_timeout - Time, in seconds, before backlight is set to
+;                     backlight_dim_level while phone is idle; setting to 0
+;                     disables backlight timeout. If not set, uses the firmware
+;                     default (30)
+;
+; backlight_dim_level - Brightness level dims to when when dim_backlight is
+;                       enabled. If not set, uses the firmware default (2)
+;
+; display_mc_notification - Enables / Disables display of missed calls on the
+;                           phone.  Enabled by default.
+;
+; small_clock - Enables / Disables a small date and time instead of the larger
+;                         default clock on the phone.  Supported by D6X models.
+;
+; default_fontsize - Sets the default font size for the phone. Caution should be
+;                    exercised when using this option as larger sizes will cause labels
+;                    to overrun their allowed space.
+;                    Defaults:
+;                    D40: 10
+;                    D45: 10
+;                    D50: 10
+;                    D70: 11
+;
+; idle_company_text - Sets the text that is displayed on a phone's status bar
+;                     when it is in an idle state.
+;
+; -- Locale Settings --
+; active_locale - Sets the phone's acive locale.  This affects the phone's date and time
+;                display, tones, and translation.  Supported locales, that may vary
+;                by phone firmware version, are:
+;                de_DE - Deutsch / Deutschland
+;                en_AU - English / Australia
+;                en_CA - English / Canada
+;                en_GB - English / United Kingdom
+;                en_US - English / United States
+;                es_ES - Español / España
+;                es_MX - Español / México
+;                fr_BE - Français / Belgique
+;                fr_CA - Français / Canada
+;                fr_FR - Français / France
+;                it_IT - Italiano / Italia
+;                nl_BE - Nederlands / België
+;                nl_NL - Nederlands / Nederland
+;                pt_BR - Portuguȇs / Brasil
+;                pt_PT - Portuguȇs / Portugal
+;                if no locale is specified, the phone defaults to en_US.
+;
+; -- Sound Settings --
+; ringer_volume - Sets the ringer volume. If not set, uses the firmware default (5)
+;
+; speaker_volume - Sets the speaker volume. If not set, uses the firmware default (5)
+;
+; handset_volume - Sets the handset volume. If not set, uses the firmware default (5)
+;
+; headset_volume - Sets the headset volume. If not set, uses the firmware default (5)
+;
+; reset_call_volume - If enabled, volume changes made during a call do not
+;                     persist to the next call.  Disabled by default.
+;
+; call_waiting_tone - If disabled, the phone will not play a call waiting tone when
+;                     it receives a new call while already on a call
+;
+; handset_sidetone_db - Sets the gain, in negative whole integer dBs, for
+;                       sidetone presented on the phone's handset. Defaults
+;                       to -25. Digium cautions against changing this value.
+;
+; headset_sidetone_db - Sets the gain, in negative whole integer dBs, for
+;                       sidetone presented on the phone's headset. Defaults
+;                       to -15. Digium cautions against changing this value.
+;
+; -- Call Answering --
+; headset_answer - Sets whether to use the headset, rather than the speaker,
+;                  for answering all calls.  Disabled by default.
+;
+; -- Network Port Settings
+; lan_port_mode - Sets the port speed for the phone's LAN port.  Available options,
+;                 depending on phone model, are:
+;                 auto - auto-negotiate, the default
+;                 10hd - 10 megabit, half-duplex
+;                 10fd - 10 megabit, full-duplex
+;                 100hd - 100 megabit, half-duplex
+;                 100fd - 100 megabit, full-duplex
+;                 1000fd - 1000 megabit, full-duplex
+;
+; pc_port_mode - Sets the port speed for the phone's PC port.  Available options,
+;                depending on phone model, are:
+;                auto - auto-negotiate, the default
+;                10hd - 10 megabit, half-duplex
+;                10fd - 10 megabit, full-duplex
+;                100hd - 100 megabit, half-duplex
+;                100fd - 100 megabit, full-duplex
+;                1000fd - 1000megabit, full-duplex
+;                off - disables the PC port
+;
+; -- 802.1x settings --
+; 8021x_passthrough - Set to "1" to enable pass-through
+;
+; 8021x_eapol_on_disconnect - Set to "1" to enable EAPOL
+;
+; 8021x_method - Sets the authentication method.  Available options include:
+;                  eap-md5
+;                  eap-tls
+;                  peap-mschap
+;                  peap-gtc
+;                  ttls-mschap
+;                  ttls-gtc
+;
+; 8021x_identity - Sets the username for authentication
+;
+; 8021x_anonymous_identity - Sets the anonymous identifier
+;
+; 8021x_password - Sets the password for authentication
+;
+; 8021x_client_cert_url - URL of the client certificate
+;
+; 8021x_client_cert_value - Name of the certificate stored locally (change to force reload)
+;
+; 8021x_root_cert_url - URL of the root certificate
+;
+; 8021x_root_cert_value - Name of the certificate stored locally (change to force reload)
+;
+; Note: For both certificates, the name value is generated from the URL file portion when
+;       not specified.  If the contents of the URL have been changed, but the URL remains
+;       unchanged, the name value must be changed to cause the phone to replace the local
+;       cache copy of the certificate file.
+;
+; -- OpenVPN settings --
+; openvpn_enable - Set to "1" to enable openvpn
+;
+; openvpn_config_file_url - Sets the URL of the configuration file
+;
+; openvpn_config_file_value - Name of the file stored locally (change to force reload)
+;
+; openvpn_root_cert_url - Sets the URL of the root certificate file
+;
+; openvpn_root_cert_value - Name of the file stored locally (change to force reload)
+;
+; openvpn_client_cert_url - Sets the URL of the client certificate file
+;
+; openvpn_client_cert_value - Name of the file stored locally (change to force reload)
+;
+; openvpn_client_key_url - Sets the URL of the client key file
+;
+; openvpn_client_key_value - Name of the file stored locally (change to force reload)
+;
+; Note: For all four URLs, the name value is generated from the URL file portion when
+;       not specified.  If the contents of the URL have been changed, but the URL remains
+;       unchanged, the name value must be changed to cause the phone to replace the local
+;       cache copy of the configuration or certificate file.
+;
+; -- Other Settings --
+; enable_check_sync - Enabled by default.  If disabled, a phone that receives
+;                     a SIP NOTIFY with 'Event: check-sync' will not restart.
+
+; ---- PHONE EXAMPLE ----
+; [bobsphone]
+; type=phone
+; network=network1
+; mac=0123456789ab
+; pin=101010109
+; firmware=firmware-D40_1_1
+; firmware=firmware-D50_1_1
+; firmware=firmware-D70_1_1
+; line=bob101
+; line=bob102
+; external_line=bobexternal
+; application=queue-bob-1234
+; application=away-status-ex
+; application=dnd-status-ex
+; full_name=Bob's Phone
+; contact=bobscontacts.xml
+; contact=bobsothercontacts.xml
+; blf_contact_group=RapidDial
+; blf_items=bobsblfitems.xml
+; blf_page_return_timeout=0
+; contacts_max_subscriptions=40
+; timezone=America/Los_Angeles
+; ntp_resync=86400
+; parking_exten=700
+; parking_transfer_type=blind
+; show_call_parking=yes
+; ringtone=fancytone
+; active_ringtone=GuitarStrum
+; alert=alert-fancytone
+; multicastpage=everyone
+; codecs=PCMU,PCMA,G722,!G729,opus
+; web_ui_enabled=no
+; record_own_calls=yes
+; blf_unused_linekeys=no
+; send_to_vm=no
+; d40_logo_file=d40_logo.png
+; d45_logo_file=d45_logo.png
+; d50_logo_file=d50_logo.png
+; d60_logo_file=d60_logo.png
+; d62_logo_file=d62_logo.png
+; d65_logo_file=d65_logo.png
+; d70_logo_file=d70_logo.png
+; d80_logo_file=d80_logo.png
+; wallpaper_file=wallpaper.png
+; lock_preferences=yes
+; login_password=1234
+; accept_local_calls=yes
+; ehs=plantronics
+; can_forward_calls=yes
+; show_call_log=yes
+; display_mc_notification=no
+; small_clock=no
+; active_locale=de_DE
+; brightness=5
+; contrast=5
+; dim_backlight=yes
+; backlight_timeout=30
+; backlight_dim_level=2
+; ringer_volume=5
+; speaker_volume=5
+; handset_volume=5
+; headset_volume=5
+; reset_call_volume=no
+; call_waiting_tone=yes
+; headset_answer=no
+; lan_port_mode=auto
+; pc_port_mode=auto
+; enable_check_sync=yes
+
+; ---- CONFIGURING LINES ----
+; Internal lines are sip peers, but there is Digium Phone specific data
+; associated with lines that can not exist in the line's sip.conf
+; entry. Because of this, advanced line features must be defined
+; separate from sip.conf in the res_digium_phone.conf file. This
+; advanced line configuration is not a requirement to get a line to
+; work. It only acts as a method of setting advanced phone features
+; to an already defined sip.conf entry.
+;
+; Advanced line features are defined by creating a new context in
+; res_digium_phone.conf with the type option equal to "line".
+;
+; INTERAL LINE OPTIONS... type = line
+;
+; exten -     When the sip peer name is different than the actual extension
+;             used to contact this line, this option should be set to properly
+;             set the line's dialable extension.  By default it is assumed that
+;             the sip peer name is actual extension, which is true for many
+;             Asterisk distributions, such as AsteriskNOW, but is not considered
+;             a best practice for use of generic Asterisk.
+; digit_map - The digit mapping to use for this line.
+; line_label - The line label to display on the phone for this line's line key
+;              entry.
+; mailbox - The voicemail box associated with the line. When not set and when
+;           using chan_sip this will default first to the mailbox defined for
+;           the sip peer.  When not set and when using chan_pjsip this will
+;           default to an aggregation of mailboxes for aors specified on the
+;           associated endpoint.  If no mailboxes are set within either of those
+;           configuration files (sip/pjsip) for a line then it will attempt to
+;           use a mailbox entry in voicemail.conf matching the name of the line.
+;           If neither of these are found and this option is not set, the line
+;           does not have a mailbox and visual voicemail will not be enabled.
+;
+; voicemail_uri - If the phone's msg button should dial a sip URI rather than
+;                 opening the visual voicemail application, this option
+;                 specifies what uri the msg button should dial.  Note that
+;                 setting this option on a phone's primary line will disable
+;                 visual voicemail.
+;                 Example:
+;                 voicemail_uri="sip:user@host"
+;
+; outboundproxy_address - The outbound proxy address this line should use.
+; outboundproxy_port - The outbound proxy port this line should use, defaults
+;                      to 5060 when the outboundproxy_addr is set.
+;
+; plar_number - Specifies the private line automatic ringdown (PLAR) extension.
+;               When set the phone will be configured to auto dial the given
+;               extension when an outgoing call is attempted.
+;
+; transport - The transport (udp, tcp, or tls) this phone line should use.  Defaults
+;             to udp for all lines.  If not specified, the network transport is used.
+; media_encryption - Specify media encryption protocol.  Can be set to sdes,
+;                    defaults to not set (none).
+; reregistration_timeout=300  ; How often in seconds before re-registering.
+; registration_retry_interval=25 ; How many seconds to wait before retrying
+;                                ; to register after registration fails.
+; registration_max_retries=5 ; How many times the phone will attempt to retry
+;                            ; registering after registration fails.
+;
+; secret - If SIP peers are stored in ARA, then the secret for the SIP peer
+;          mapped to this line must be specified so that the Digium phone
+;          can be passed the correct SIP peer credentials.  If the SIP peer
+;          for this line is specified in sip.conf or pjsip.conf, this option is
+;          not required.  Note - if configured in pjsip.conf it attempts to use
+;          the first 'auth_pass' found for an associated endpoint's [inbound]
+;          auths.
+;
+; context - If SIP peers are stored in ARA, then the dialplan context to which
+;           the SIP peer is assigned must be specified so that dialplan hints
+;           can be properly created by the DPMA.  If the SIP peer for this
+;           line is specified in sip.conf or on an endpoint in pjsip.conf, this
+;           option is not required.
+
+; ---- LINE EXAMPLE ----
+; [bob101]
+; type=line
+; digit_map=[0-8]xx
+; line_label=BobbyJ
+; mailbox=bob101@default
+; outboundproxy_address=10.1.2.3
+; outboundproxy_port=5060
+; transport=udp
+; media_encryption=
+; reregistration_timeout=300
+; registration_retry_interval=25
+; registration_max_retries=5
+
+; EXTERNAL LINE OPTIONS... type = external_line
+;
+; It is possible to configure a line to be external to this Asterisk instance.
+; This is done by setting the 'type' option in the in the line configuration
+; to 'external_line'. External lines are lines that are not entries in sip.conf
+; and may or may not even talk to this specific Asterisk instance. The external
+; lines concept exists to lift the limitation of forcing lines to be sip.conf
+; peers. Since external lines are not sip peers, they require more information
+; than normal line configurations.  Below are the external line specific
+; configuration options.  Note that _ALL_ internal line options are present for
+; external lines as well, but any internal line options specific to applications
+; on the phone, such as mailbox to enable visual voicemail, will not work unless
+; the server side component resides on this Asterisk instance.  Picking an
+; external line as the primary line for a phone will result in the advanced pbx
+; features not being enabled on the phone.
+;
+; server_address - The address this line should contact for registration and
+;                  outbound calls.
+; server_port - The port this line should contact for registration and
+;               outbound calls. Defaults to 5060.
+; secondary_server_address - The address this line should contact for
+; registration and outbound calls if the primary one is not available.
+; secondary_server_port - The port this line shoudl contact for registration and
+;                         outbound calls when the primary one is not available.
+;                         Defaults to 5060.
+; secondary_server_transport - The transport (udp, tcp, or tls) the secondary phone
+;                              line should use.  Defaults to udp for all lines.
+; secondary_media_encryptioon - Specify media encryption protocol (sdes).
+; userid - This line's sip username.  Defaults to the line's name.
+; authname - SIP authorization name if different that userid.
+;            Defaults to whatever is in userid when left blank.
+; secret - The sip secret if this line should use.
+; register - Indicates whether this line should register or not.
+; callerid - Caller id field to use for this line.
+
+; ---- EXTERNAL LINE EXAMPLE ----
+; [bob1234]
+; type=external_line
+; server_address=otherpbx.mycompany.com
+; server_port=5061
+; transport=udp
+; media_encryption=
+; secondary_server_address=otherpbx2.mycompany.com
+; secondary_server_transport=udp
+; secondary_media_encryption=
+; userid=bob1234
+; authname=bob4321
+; secret=mymagicalpassword
+; register=yes
+; callerid=BOb Jones <555-1234>
+
+; ---- CONFIGURING APPLICATIONS ----
+; application - The application name.
+;
+; Currently supported applications:
+; * queue
+; * status
+; * parking
+; * custom
+; * voicemail
+;
+; Queue Application
+; queue - Asterisk's queue identifier, as configured in queues.conf
+; membername -  Defaults to 'fullname' from the phone type configuration. Allows
+;               customization of the queue membername as viewed in the Queues
+;               application
+; location - Defines the location of the member, from app_queue.so's perspective.
+;           For setups not involving local channels, this may not be required.
+; member - Defines whether or not the user of this application is also a member
+;          of the queue that will receive calls. Defaults to yes.
+; permission - Sets the permission level for this user. Status provides only
+;              login/out/pause capabilities. Overview also provides statistical
+;              information about a queue. Details also provides information about
+;              waiting callers and on-call members.
+; login_exten - If defined, sets the extension and context to be dialed when a
+;               user of the application executes a log in command. If not set,
+;               the QueueAdd functionality will be used directly.
+; logout_exten - If defined, sets the extension and context to be dialed when a
+;                user of the application eecuted a log out command. If not set,
+;                the QueueRemove functionality will be used directly.
+;
+
+; ---- QUEUE APPLICATION EXAMPLE ----
+; [bob-queue-1234]
+; type=application
+; application=queue
+; queue=sales-queue
+; membername=Bob Jones
+; location=Local/6002@ext-queue/n
+; member=yes
+; permission=details
+; login_exten=*451234@ext-queue
+; logout_exten=*451234@ext-queue
+
+; Status Application
+; status - primary status attribute. All usable values listed below:
+;          unavailable, available, away, xa, chat, dnd
+; substatus - An arbitrary string used to describe the status. Multiple
+;             instances of substatus can be used and each of them will be
+;             included as a separate selectable instance to the end-user.
+;             It is not necessary to include a substatus.
+; send486 - Controls whether a phone sends a 486 response when in the specified status.
+;           By default, this is true only for xa and dnd statuses. This option can
+;           be used to enable/disable this for any status. Accepted values are "yes"
+;           and "no". Any other true/false values normally used by Asterisk also work.
+
+; ---- STATUS APPLICATION EXAMPLES ----
+; [away-status-ex]
+; type=application
+; application=status
+; status=away
+; substatus=Out to Lunch
+; substatus=Hobnobbing with Celebrities
+; send486=yes
+;
+; [dnd-status-ex]
+; type=application
+; application=status
+; status=dnd
+; substatus=Sleeping in my Office, very important.
+; substatus=Leave me alone, I'm having personal problems!
+;
+
+; Voicemail Application
+; require_password - pin number entry prompt is displayed for the phone when
+;                    using the voicemail application. Failed pin rejects entry.
+;                    Default value is "no".
+;
+; The voicemail application currently only exists to provide localization support
+; for the visual voicemail folders and to allow the require_password option to be
+; set. It allows a phone user to associate a translation table for the visual
+; voicemail application. Example translation tables are below.
+;
+;
+; NOTE: the translation tables for the visual voicemail application are independent
+; of the locale chosen for the phone.
+
+; ---- VOICEMAIL APPLICATION EXAMPLES ----
+; type=application
+; application=voicemail
+; translation=de_DE
+; require_password=true
+;
+; [de_DE]
+; type=translation
+; INBOX=INBOX
+; Work=Arbeit
+; Family=Familie
+; Friends=Freunde
+; Recordings=Aufnahmen
+;
+; [nl_NL_and_nl_BE]
+; type=translation
+; INBOX=INBOX
+; Work=Werk
+; Family=Familie
+; Friends=Vrienden
+; Recordings=Opnamen
+;
+; [fr_FR_and_fr_CA_and_fr_BE]
+; type=translation
+; INBOX=INBOX
+; Work=Travail
+; Family=Famille
+; Friends=Amis
+; Recordings=Enregistrements
+;
+; [it_IT]
+; type=translation
+; INBOX=INBOX
+; Work=Lavori
+; Family=Famiglia
+; Friends=Amici
+; Recordings=Registrazioni
+;
+; [es_ES_and_es_MX]
+; type=translation
+; INBOX=INBOX
+; Work=Trabajo
+; Family=Familia
+; Friends=Amigos
+; Recordings=Grabaciones
+;
+; [pt_PT_and_pt_BR]
+; type=translation
+; INBOX=INBOX
+; Work=Trabalho
+; Family=Família
+; Friends=Amigos
+; Recordings=Gravações
+
+; Parking Application
+; parkinglot - a given parkinglot the user of this application should be able
+;              to access and use. Multiple instances of this may be used in a
+;              single application.
+
+; ---- PARKING APPLICATION EXAMPLES ----
+; type=application
+; application=parking
+; parkinglot=parkinglot_london
+; parkinglot=parkinglot_dublin
