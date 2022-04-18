@@ -1,9 +1,1 @@
 
-[gravacao]
-exten => s,1,NoOp(Iniciando gravacao da chamada)
-same => n,MSet(NORIGEM=${ARG1},NDESTINO=${ARG2})
-same => n,Set(NGRAVACAO=/var/spool/asterisk/monitor/${STRFTIME(${EPOCH},,%Y)}/${STRFTIME(${EPOCH},,%m)}/${STRFTIME(${EPOCH},,%d)}/Gravacao-${STRFTIME(${EPOCH},,%H-%M-%S-${NORIGEM}-${NDESTINO}-${UNIQUEID}.wav))
-same => n,MixMonitor(${NGRAVACAO},b)
-same => n,MacroExit()
-
-
